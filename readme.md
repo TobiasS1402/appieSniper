@@ -1,5 +1,5 @@
 <div align="center" id="top"> 
-  <img src="/appieSniper.png" alt="AppieSniper" />
+  <img src="/appieSniper.png" alt="AppieSniper" width="300" height="300" />
 
   &#xa0;
 
