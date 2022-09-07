@@ -59,7 +59,7 @@ $ python3 main.py
 
 ```
 
-## Intersting/used endpoints
+## Interesting / used endpoints
 - https://api.ah.nl/ms/mobile-services/leftovers/v2/surprise-boxes/member
 - https://api.ah.nl/ms/mobile-services/leftovers/v2/surprise-boxes/available/stores/[store nr.]
 - https://api.ah.nl/mobile-auth/v1/auth/token/anonymous

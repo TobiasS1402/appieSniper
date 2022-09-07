@@ -1,6 +1,7 @@
 import sqlite3
 import requests
 import json
+import logging
 from dotenv import dotenv_values
 from apscheduler.schedulers.blocking import BlockingScheduler
 
@@ -18,7 +19,7 @@ def init(latitude, longitude):
     url = "https://www.ah.nl/gql" #open gql endpoint for anonymous requests
     headers = {'Client-Name': 'ah-stores','Client-Version':'0.230.0'} #Missing client identification. Requests should include \"client-name\" and \"client-version\" headers
     gql_body = """query stores($filter: StoreFilterInput, $size: PageSize!, $start: Int) {stores(filter: $filter, size: $size, start: $start) { result { ...storeList __typename} page { total hasNextPage __typename} __typename }}fragment storeList on Store { id name  storeType  phone distance address { ...storeAddress __typename } geoLocation { latitude longitude __typename} openingDays { ...openingDaysInfo __typename } __typename}fragment storeAddress on StoreAddress { city street houseNumber houseNumberExtra postalCode countryCode __typename}fragment openingDaysInfo on StoreOpeningDay { dayName type date openingHour { ...storeOpeningHour __typename } }fragment storeOpeningHour on StoreOpeningHour { date openFrom openUntil  __typename}"""
-    json_data = {"operationName":"stores","variables":{"filter":{"location":{"latitude":latitude,"longitude":longitude}},"start":0,"size":100},"query": gql_body} #tweak size: number of albert heijns this variable is for filtering
+    json_data = {"operationName":"stores","variables":{"filter":{"location":{"latitude":latitude,"longitude":longitude}},"start":0,"size":20},"query": gql_body} #tweak size: number of albert heijns this variable is for filtering
     response = requests.post(url=url, headers=headers, json=json_data, ) #simple post request putting it all together
 
     if response.status_code == 200:
@@ -87,7 +88,8 @@ def telegramConnection(appieNotification):
     bot_chatID = readConfig().get('telegram_chat_id')
     send_text = 'https://api.telegram.org/bot' + bot_token + '/sendMessage?chat_id=' + bot_chatID + '&parse_mode=Markdown&text=' + appieNotification
     response = requests.get(send_text)
-    print(response.json())
+    logging.info(response.json)
+    return
 
 def boxRequests():
     '''
@@ -105,9 +107,11 @@ def boxRequests():
                 if entry is None:
                     cursor.execute('INSERT INTO APPIE_OFFERS (StoreId,Amount,BoxCat,BoxOldPrice,BoxNewPrice) VALUES (?,?,?,?,?)', (offer["storeId"],offer['amount'],offer['boxCategory'],offer['boxOldPrice'],offer['boxNewPrice']))
                     sqliteConnection.commit()
-                    telegramConnection(f"📦 {offer['boxCategory']}, Available: {offer['amount']}\n🏢 {value[1]['street']} {value[1]['houseNumber']}, {value[1]['city']}\n🏃‍♂️ {value[2]} meters distance\n💰 €{offer['boxNewPrice']}\n🔔 Pickup {offer['pickupFrom']} until {offer['pickupTill']}\n🕢 Open {value[3]['openFrom']} until {value[3]['openUntil']}")
+                    telegramConnection(f"📦 {offer['boxCategory']}, Available: {offer['amount']}\n🏢 {value[1]['street']} {value[1]['houseNumber']}, {value[1]['city']}\n🏃‍♂️ {value[2]} meters distance\n💰 €{offer['boxNewPrice']} down from €{offer['boxOldPrice']} \n🔔 Pickup {offer['pickupFrom']} until {offer['pickupTill']}\n🕢 Open {value[3]['openFrom']} until {value[3]['openUntil']}")
                 else:
-                    print("entry already inside")
+                    logging.info(f"{offer['boxCategory']} at {offer['storeId']} already in database")
+        else:
+            logging.info("Nothing available :(")
                 
 
 def main():
@@ -115,6 +119,10 @@ def main():
     main function to keep alive forever and this starts multiple functions above and schedules the api calls for token refreshing and the box requests
     '''
     try:
+        logging.basicConfig(
+        format='%(asctime)s %(levelname)-8s %(message)s',
+        level=logging.INFO,
+        datefmt='%Y-%m-%d %H:%M:%S')
         readConfig()
         initDB()
         requestToken()
