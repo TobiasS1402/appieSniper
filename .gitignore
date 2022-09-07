@@ -1,0 +1,5 @@
+appie.db
+*.db
+config.ini
+.env
+
