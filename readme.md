@@ -39,7 +39,39 @@ A simple Python program for polling the Albert Heijn REST and Graph API's to get
 
 The program works by grabbing the nearest x (default 5) number of Albert Heijn stores based on your latitude and longitude. After this it keeps a record of stores with boxes available and it will send you a Telegram notification when something's changed. e.g. boxes are available, a box is gone, everything is gone.
 
-## :checkered_flag: Starting ##
+## ☸ Running inside a container ##
+
+### 🚢 pulling from ghcr.io ###
+```bash
+# Clone this project
+$ docker pull ghcr.io/tobiass1402/appiesniper:v0.1.2
+
+# Run the project with env file
+$ docker run -d ghcr.io/tobiass1402/appiesniper:v0.1.2 --env-file .env
+
+# Run the project with docker env variables
+$ docker run -d ghcr.io/tobiass1402/appiesniper:v0.1.2 -e longitude=5.1331746 -e latitude=51.5868726 -e telegram_bot_token='xxxxxxxx:xxxxxxxxxxxxxxxxxxxx' -e telegram_chat_id='xxxxxxxx' -e number_of_stores=5
+```
+
+### 🔨 Building it yourself ###
+```bash
+# Clone this project
+$ git clone https://github.com/TobiasS1402/appiesniper
+
+# Access
+$ cd appiesniper
+
+# Build the container environment
+$ docker build . -t tobiass1402/appiesniper
+
+# Run the project with env file
+$ docker run -d tobiass1402/appiesniper --env-file .env
+
+# Run the project with docker env variables
+$ docker run -d tobiass1402/appiesniper -e longitude=5.1331746 -e latitude=51.5868726 -e telegram_bot_token='xxxxxxxx:xxxxxxxxxxxxxxxxxxxx' -e telegram_chat_id='xxxxxxxx' -e number_of_stores=5
+```
+
+## ☸ Running standalone ##
 
 ```bash
 # Clone this project

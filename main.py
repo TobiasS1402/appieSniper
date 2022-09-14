@@ -2,7 +2,8 @@ import sqlite3
 import requests
 import json
 import logging
-from dotenv import dotenv_values
+import os
+from dotenv import load_dotenv
 from apscheduler.schedulers.blocking import BlockingScheduler
 
 
@@ -16,8 +17,11 @@ def readConfig():
     '''
     reading environment variables
     '''
-    logging.info("Environment file has been read")
-    return dotenv_values(".env") 
+    if os.path.exists('.env') == True:
+        load_dotenv()
+        return logging.info("Environment file has been read")
+    else:
+        return logging.info(".env file not present, falling back to normal Environment")
 
 def init(latitude, longitude):
     '''
@@ -27,7 +31,7 @@ def init(latitude, longitude):
     url = "https://www.ah.nl/gql" #open gql endpoint for anonymous requests
     headers = {'Client-Name': 'ah-stores','Client-Version':'0.230.0'} #Missing client identification. Requests should include \"client-name\" and \"client-version\" headers
     gql_body = """query stores($filter: StoreFilterInput, $size: PageSize!, $start: Int) {stores(filter: $filter, size: $size, start: $start) { result { ...storeList __typename} page { total hasNextPage __typename} __typename }}fragment storeList on Store { id name  storeType  phone distance address { ...storeAddress __typename } geoLocation { latitude longitude __typename} openingDays { ...openingDaysInfo __typename } __typename}fragment storeAddress on StoreAddress { city street houseNumber houseNumberExtra postalCode countryCode __typename}fragment openingDaysInfo on StoreOpeningDay { dayName type date openingHour { ...storeOpeningHour __typename } }fragment storeOpeningHour on StoreOpeningHour { date openFrom openUntil  __typename}"""
-    json_data = {"operationName":"stores","variables":{"filter":{"location":{"latitude":latitude,"longitude":longitude}},"start":0,"size":readConfig().get('number_of_stores')},"query": gql_body} #tweak size: number of albert heijns this variable is for filtering
+    json_data = {"operationName":"stores","variables":{"filter":{"location":{"latitude":latitude,"longitude":longitude}},"start":0,"size":os.environ['number_of_stores']},"query": gql_body} #tweak size: number of albert heijns this variable is for filtering
     response = requests.post(url=url, headers=headers, json=json_data, ) #simple post request putting it all together
 
     if response.status_code == 200:
@@ -106,8 +110,8 @@ def telegramConnection(appieNotification):
     '''
     setting up api connection for sending Telegram messages
     '''
-    bot_token = readConfig().get('telegram_bot_token')
-    bot_chatID = readConfig().get('telegram_chat_id')
+    bot_token = os.environ['telegram_bot_token']
+    bot_chatID = os.environ['telegram_chat_id']
     send_text = 'https://api.telegram.org/bot' + bot_token + '/sendMessage?chat_id=' + bot_chatID + '&parse_mode=Markdown&text=' + appieNotification
     response = requests.get(send_text)
     logging.info(response.json)
@@ -117,7 +121,7 @@ def boxRequests():
     '''
     function where the magic happens: it connects to the local sqlite db, connects authenticated to the surprise-boxes api and executes queries on the database
     '''
-    results = init(float(readConfig().get('latitude')),float(readConfig().get('longitude'))) #Don't forget to make this a variable / cli parameter
+    results = init(float(os.environ['latitude']),float(os.environ['longitude'])) #Don't forget to make this a variable / cli parameter
     sqliteConnection = sqlite3.connect('appie.db')
     cursor = sqliteConnection.cursor()
     for key,value in results.items():
