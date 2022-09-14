@@ -10,10 +10,6 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 TO DO:
 -  build dedicated logging function
 -  check out classes
-
-TESTING:
--  build task to automatically nuke the database at 00:00 
--  check if amount is different before putting in the database to keep records clean
 '''
 
 def readConfig():
@@ -31,7 +27,7 @@ def init(latitude, longitude):
     url = "https://www.ah.nl/gql" #open gql endpoint for anonymous requests
     headers = {'Client-Name': 'ah-stores','Client-Version':'0.230.0'} #Missing client identification. Requests should include \"client-name\" and \"client-version\" headers
     gql_body = """query stores($filter: StoreFilterInput, $size: PageSize!, $start: Int) {stores(filter: $filter, size: $size, start: $start) { result { ...storeList __typename} page { total hasNextPage __typename} __typename }}fragment storeList on Store { id name  storeType  phone distance address { ...storeAddress __typename } geoLocation { latitude longitude __typename} openingDays { ...openingDaysInfo __typename } __typename}fragment storeAddress on StoreAddress { city street houseNumber houseNumberExtra postalCode countryCode __typename}fragment openingDaysInfo on StoreOpeningDay { dayName type date openingHour { ...storeOpeningHour __typename } }fragment storeOpeningHour on StoreOpeningHour { date openFrom openUntil  __typename}"""
-    json_data = {"operationName":"stores","variables":{"filter":{"location":{"latitude":latitude,"longitude":longitude}},"start":0,"size":100},"query": gql_body} #tweak size: number of albert heijns this variable is for filtering
+    json_data = {"operationName":"stores","variables":{"filter":{"location":{"latitude":latitude,"longitude":longitude}},"start":0,"size":readConfig().get('number_of_stores')},"query": gql_body} #tweak size: number of albert heijns this variable is for filtering
     response = requests.post(url=url, headers=headers, json=json_data, ) #simple post request putting it all together
 
     if response.status_code == 200:
@@ -47,8 +43,9 @@ def init(latitude, longitude):
                     templist.append(y['openingHour'])
             storedict[x['id']] = templist
             templist = []
+        logging.info(f"Succesful request against graphQL endpoint {url} with {response.status_code}")
     else:
-        logging.error(f"HTTP RESPONSE FAILURE @GraphQL endpoint, HTTPCODE: {response.status_code}")
+        logging.error(f"Unsuccesful request against graphQL endpoint {url} with {response.status_code}")
         quit()#stop the program when this fails, something is definitely wrong
     return storedict
 
@@ -137,6 +134,7 @@ def boxRequests():
                     if entry[1] != offer['amount']:
                         #update to right amount and send new message
                         cursor.execute('UPDATE APPIE_OFFERS SET Amount = ? WHERE (StoreId=? AND BoxCat=? AND BoxOldPrice=? AND BoxNewPrice=?)', (offer['amount'],offer["storeId"],offer['boxCategory'],offer['boxOldPrice'],offer['boxNewPrice']))
+                        sqliteConnection.commit()
                         telegramConnection(f"📦 {offer['boxCategory']}, Available: {offer['amount']}\n🏢 {value[1]['street']} {value[1]['houseNumber']}, {value[1]['city']}\n🏃‍♂️ {value[2]} meters distance\n💰 €{offer['boxNewPrice']} down from €{offer['boxOldPrice']} \n🔔 Pickup {offer['pickupFrom']} until {offer['pickupTill']}\n🕢 Open {value[3]['openFrom']} until {value[3]['openUntil']}")
                         logging.info(f"{offer['boxCategory']} at {offer['storeId']} amount changed to {offer['amount']} from {entry[1]}")
                     else:
