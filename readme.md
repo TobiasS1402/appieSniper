@@ -47,7 +47,7 @@ The program works by grabbing the nearest x (default 5) number of Albert Heijn s
 $ docker pull ghcr.io/tobiass1402/appiesniper:v0.1.2
 
 # Run the project with env file
-$ docker run -d ghcr.io/tobiass1402/appiesniper:v0.1.2 --env-file .env
+$ docker run --env-file ./.env -d ghcr.io/tobiass1402/appiesniper:v0.1.2r
 
 # Run the project with docker env variables
 $ docker run -d ghcr.io/tobiass1402/appiesniper:v0.1.2 -e longitude=5.1331746 -e latitude=51.5868726 -e telegram_bot_token='xxxxxxxx:xxxxxxxxxxxxxxxxxxxx' -e telegram_chat_id='xxxxxxxx' -e number_of_stores=5
@@ -65,7 +65,7 @@ $ cd appiesniper
 $ docker build . -t tobiass1402/appiesniper
 
 # Run the project with env file
-$ docker run -d tobiass1402/appiesniper --env-file .env
+$ docker run --env-file ./.env -d tobiass1402/appiesniper
 
 # Run the project with docker env variables
 $ docker run -d tobiass1402/appiesniper -e longitude=5.1331746 -e latitude=51.5868726 -e telegram_bot_token='xxxxxxxx:xxxxxxxxxxxxxxxxxxxx' -e telegram_chat_id='xxxxxxxx' -e number_of_stores=5
