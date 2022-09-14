@@ -1,5 +1,5 @@
 <div align="center" id="top"> 
-  <img src="/appieSniper.png" alt="AppieSniper" width="300" height="300" />
+  <img src="https://user-images.githubusercontent.com/46230851/190220948-4d11bff5-6278-4420-b328-5d06879db352.png" alt="AppieSniper" width="300" height="300" />
 
   &#xa0;
 
@@ -58,9 +58,20 @@ $ cp .env.example .env
 $ python3 main.py
 
 ```
-
+## 🤖 Telegram bot screenshot
+Telegram bot features:
+- 📦 Type of box and amount
+- 🏢 Location streetname, number & city
+- 🏃‍♂️ Meters distance from set up longitude & latitude
+- 💰 Discounted price down from "original"
+- 🔔 Pickup time window
+- 🕢 Store opening time window
+<div align="left" id="top"> 
+  <img src="https://user-images.githubusercontent.com/46230851/190221028-976d68be-8ace-45b4-be18-ddcc43cce262.png" alt="AppieSniper" width="300" height="500" />
+</div>
+	
 ## Interesting / used endpoints
-- https://api.ah.nl/ms/mobile-services/leftovers/v2/surprise-boxes/member
-- https://api.ah.nl/ms/mobile-services/leftovers/v2/surprise-boxes/available/stores/[store nr.]
-- https://api.ah.nl/mobile-auth/v1/auth/token/anonymous
-- https://api.ah.nl/mobile-auth/v1/auth/token/refresh
+- `https://api.ah.nl/ms/mobile-services/leftovers/v2/surprise-boxes/member`
+- `https://api.ah.nl/ms/mobile-services/leftovers/v2/surprise-boxes/available/stores/[store nr.]` #acquired from strore browser at https://www.ah.nl/winkels?storeId=2268 
+- `https://api.ah.nl/mobile-auth/v1/auth/token/anonymous`
+- `https://api.ah.nl/mobile-auth/v1/auth/token/refresh`
