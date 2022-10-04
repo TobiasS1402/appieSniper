@@ -13,6 +13,9 @@ on:
     types: [published]
     branches: [ "master" ]
     tags: [ 'v*.*.*' ]
+  push:
+    tags:
+      - '*'
 
 env:
   # Use docker.io for Docker Hub if empty
