@@ -3,4 +3,5 @@ appie.db
 config.ini
 .env
 .gitignore
+.venv
 

@@ -81,7 +81,7 @@ $ git clone https://github.com/TobiasS1402/appiesniper
 $ cd appiesniper
 
 # Install dependencies
-$ pip -r install requirements.txt
+$ pip install -r requirements.txt
 
 # Customise environment variables
 $ cp .env.example .env

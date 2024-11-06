@@ -23,28 +23,29 @@ def readConfig():
     else:
         return logging.info(".env file not present, falling back to normal Environment")
 
-def init(latitude, longitude):
+def init(latitude, longitude, token):
     '''
     (ab)using the default, and open GraphQL endpoint on ah.nl to extract important information about stores and their whereabouts.
     gql_body is a long graphql string tailored for getting the stores
     '''
-    url = "https://www.ah.nl/gql" #open gql endpoint for anonymous requests
-    headers = {'Client-Name': 'ah-stores','Client-Version':'0.230.0'} #Missing client identification. Requests should include \"client-name\" and \"client-version\" headers
-    gql_body = """query stores($filter: StoreFilterInput, $size: PageSize!, $start: Int) {stores(filter: $filter, size: $size, start: $start) { result { ...storeList __typename} page { total hasNextPage __typename} __typename }}fragment storeList on Store { id name  storeType  phone distance address { ...storeAddress __typename } geoLocation { latitude longitude __typename} openingDays { ...openingDaysInfo __typename } __typename}fragment storeAddress on StoreAddress { city street houseNumber houseNumberExtra postalCode countryCode __typename}fragment openingDaysInfo on StoreOpeningDay { dayName type date openingHour { ...storeOpeningHour __typename } }fragment storeOpeningHour on StoreOpeningHour { date openFrom openUntil  __typename}"""
-    json_data = {"operationName":"stores","variables":{"filter":{"location":{"latitude":latitude,"longitude":longitude}},"start":0,"size":os.environ['number_of_stores']},"query": gql_body} #tweak size: number of albert heijns this variable is for filtering
+    url = "https://api.ah.nl/graphql" #open gql endpoint for anonymous requests
+    headers = {'Client-Name': 'ah-stores','Client-Version':'0.230.0', "Authorization": "Bearer " + token} #Missing client identification. Requests should include \"client-name\" and \"client-version\" headers
+    gql_body = """query storesListResults($filter: StoresFilterInput, $size: PageSize!, $start: Int) {storesSearch(filter: $filter, size: $size, start: $start) { result { ...storesList __typename} pageInfo { total hasNextPage __typename} __typename }}fragment storesList on Stores { id name  storeType  phone distance address { ...storesAddress __typename } geoLocation { latitude longitude __typename} openingDays { ...openingDaysInfo __typename } __typename}fragment storesAddress on StoresAddress { city street houseNumber houseNumberExtra postalCode countryCode __typename}fragment openingDaysInfo on StoresOpeningDay { dayName type date openingHour { ...storesOpeningHour __typename } }fragment storesOpeningHour on StoresOpeningHour { openFrom openUntil  __typename}"""
+    json_data = {"operationName":"storesListResults","variables":{"filter":{"location":{"latitude":latitude,"longitude":longitude}},"start":0,"size":os.environ['number_of_stores']},"query": gql_body} #tweak size: number of albert heijns this variable is for filtering
     response = requests.post(url=url, headers=headers, json=json_data, ) #simple post request putting it all together
 
     if response.status_code == 200:
         storedict = {}
         templist = []
         jsonformatting = json.loads(response.text)
-        for x in (jsonformatting["data"]["stores"]["result"]): #json filters for grabbing a couple of important variables
+        for x in (jsonformatting["data"]["storesSearch"]["result"]): #json filters for grabbing a couple of important variables
             templist.append(x['name'])
             templist.append(x['address'])
             templist.append(x['distance'])
             for y in (x['openingDays']):
-                if y['type'] == "CURRENT":
-                    templist.append(y['openingHour'])
+                for i in y:
+                    if i['type'] == "CURRENT":
+                        templist.append(i['openingHour'])
             storedict[x['id']] = templist
             templist = []
         logging.info(f"Succesful request against graphQL endpoint {url} with {response.status_code}")
@@ -121,7 +122,7 @@ def boxRequests():
     '''
     function where the magic happens: it connects to the local sqlite db, connects authenticated to the surprise-boxes api and executes queries on the database
     '''
-    results = init(float(os.environ['latitude']),float(os.environ['longitude'])) #Don't forget to make this a variable / cli parameter
+    results = init(float(os.environ['latitude']),float(os.environ['longitude']), accessToken) #Don't forget to make this a variable / cli parameter
     sqliteConnection = sqlite3.connect('appie.db')
     cursor = sqliteConnection.cursor()
     for key,value in results.items():
